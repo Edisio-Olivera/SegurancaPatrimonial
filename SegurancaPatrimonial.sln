@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33801.447
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SegurancaPatrimonial", "SegurancaPatrimonial\SegurancaPatrimonial.csproj", "{5ACC46A3-7D6A-462F-AE23-CD8A65F575DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5ACC46A3-7D6A-462F-AE23-CD8A65F575DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ACC46A3-7D6A-462F-AE23-CD8A65F575DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ACC46A3-7D6A-462F-AE23-CD8A65F575DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ACC46A3-7D6A-462F-AE23-CD8A65F575DA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {856415ED-7D7E-414C-9C6E-9B34AF19BF1F}
+	EndGlobalSection
+EndGlobal
