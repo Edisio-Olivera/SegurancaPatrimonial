@@ -15,6 +15,7 @@ namespace SegurancaPatrimonial.DTO
 		private string _local;
 		private string _setor;
 		private string _iata;
+		private string _status;
 
         public int Id { get => _id; set => _id = value; }
         public string Codigo { get => _codigo; set => _codigo = value; }
@@ -23,5 +24,6 @@ namespace SegurancaPatrimonial.DTO
         public string Local { get => _local; set => _local = value; }
         public string Setor { get => _setor; set => _setor = value; }
         public string Iata { get => _iata; set => _iata = value; }
+	public string Status{ get => _status; set => _status = value; }
     }
 }

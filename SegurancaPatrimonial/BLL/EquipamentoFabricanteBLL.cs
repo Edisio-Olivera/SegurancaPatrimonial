@@ -6,21 +6,21 @@ using System.Threading.Tasks;
 using SegurancaPatrimonial.DTO;
 using SegurancaPatrimonial.DAL;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace SegurancaPatrimonial.BLL
 {
     class EquipamentoFabricanteBLL
     {
         ConexaoDAL conexao = new ConexaoDAL();
-        MySqlCommand cmd = new MySqlCommand();
+        OleDbCommand cmd = new OleDbCommand();
 
 		public List<EquipamentoFabricanteDTO> PopularComboboxFabricante()
 		{
 			cmd.CommandText = "SELECT nome FROM tb_equipamento_fabricante";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 			List<EquipamentoFabricanteDTO> fabricante = new List<EquipamentoFabricanteDTO>();
 
 			while (leitor.Read())
@@ -36,27 +36,27 @@ namespace SegurancaPatrimonial.BLL
 			return fabricante;
 		}
 
-		public string SelecionarCodigoFabricante(EquipamentoFabricanteDTO f)
+		public Int32 SelecionarIdFabricante(EquipamentoFabricanteDTO ef)
 		{
-			cmd.CommandText = "SELECT codigo FROM tb_equipamento_fabricante " +
-				"WHERE nome = '" + f.Nome + "'";
+			cmd.CommandText = "SELECT id FROM tb_equipamento_fabricante " +
+				"WHERE nome = '" + ef.Nome + "'";
 
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
-				f.Codigo = leitor.GetString(0);
+				ef.Id = leitor.GetInt32(0);
 
 				conexao.desconectar();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 
-			return f.Codigo;
+			return ef.Id;
 		}
 	}
 }

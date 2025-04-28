@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using SegurancaPatrimonial.DTO;
 using SegurancaPatrimonial.DAL;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace SegurancaPatrimonial.BLL
 {
     class EquipamentoBLL
     {
 		ConexaoDAL conexao = new ConexaoDAL();
-		MySqlCommand cmd = new MySqlCommand();
+		OleDbCommand cmd = new OleDbCommand();
 
 		EquipamentoTipoDTO tipDto = new EquipamentoTipoDTO();
 		EquipamentoTipoBLL tipBll = new EquipamentoTipoBLL();
@@ -44,14 +44,14 @@ namespace SegurancaPatrimonial.BLL
 				try
 				{
 					cmd.Connection = conexao.conectar();
-					MySqlDataReader leitor = cmd.ExecuteReader();
+					OleDbDataReader leitor = cmd.ExecuteReader();
 
 					leitor.Read();
-					e.Id = leitor.GetInt32(0);
+					e.Id = leitor.GetInt32(0) + 1;
 
 					conexao.desconectar();
 				}
-				catch (MySqlException ex)
+				catch (OleDbException ex)
 				{
 					MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				}
@@ -65,7 +65,7 @@ namespace SegurancaPatrimonial.BLL
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				qtdIdEquipamento = leitor.GetInt32(0);
@@ -73,7 +73,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -83,6 +83,8 @@ namespace SegurancaPatrimonial.BLL
 
 		public void SalvarEquipamento(EquipamentoDTO e)
 		{
+			modDto.TipoEquipamento = e.TipoEquipamento;
+			modDto.Fabricante = e.Fabricante;
 			modDto.Modelo = e.Modelo;
 			modBll.SelecionarCodigoModeloEquipamento(modDto);
 
@@ -94,22 +96,26 @@ namespace SegurancaPatrimonial.BLL
 				"codigo, " +
 				"dataAquisicao, " +
 				"codModelo, " +
+				"mac, " +
 				"endIp, " +
 				"mascara, " +
 				"gateway, " +
 				"usuario, " +
 				"senha, " +
+				"codEstacao, " +
 				"idStatus) " +
 				"VALUES (" +
 				e.Id + ", '" +
 				e.Codigo + "', '" +
 				e.DataAquisicao + "', '" +
 				modDto.Codigo + "', '" +
+				e.Mac + "', '" +
 				e.EnderecoIp + "', '" +
 				e.Mascara + "', '" +
 				e.Gateway + "', '" +
 				e.Usuario + "', '" +
-				e.Senha + "', " +
+				e.Senha + "', '" +
+				e.Estacao + "', " +
 				staDto.Id + ")";
 
 			try
@@ -120,7 +126,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -153,7 +159,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -171,7 +177,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -180,31 +186,33 @@ namespace SegurancaPatrimonial.BLL
 		public List<EquipamentoDTO> SelecionarEquipamento(EquipamentoDTO e)
 		{
 			cmd.CommandText = "SELECT " +
-				"e.id, " +
-				"e.codigo, " +
-				"e.dataAquisicao, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"e.endIp, " +
-				"e.mascara, " +
-				"e.gateway, " +
-				"e.usuario, " +
-				"e.senha, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE e.codigo = '" + e.Codigo + "'";
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento.mac, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+				"FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "WHERE tb_equipamento.codigo = '" + e.Codigo + "'";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
-			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(14);
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
 
 			leitor.Read();
 
@@ -212,19 +220,78 @@ namespace SegurancaPatrimonial.BLL
 
 			equip[0].Id = leitor.GetInt32(0);
 			equip[0].Codigo = leitor.GetString(1);
-			DateTime dataAquisicao = DateTime.Parse(leitor.GetString(2));
-			equip[0].DataAquisicao = dataAquisicao.ToString("dd/MM/yyyy");
+			equip[0].DataAquisicao = leitor.GetDateTime(2);
 			equip[0].TipoEquipamento = leitor.GetString(3);
 			equip[0].Fabricante = leitor.GetString(4);
 			equip[0].Modelo = leitor.GetString(5);
-			equip[0].Descricao = leitor.GetString(6);
-			equip[0].EnderecoIp = leitor.GetString(7);
-			equip[0].Mascara = leitor.GetString(8);
-			equip[0].Gateway = leitor.GetString(9);
-			equip[0].Usuario = leitor.GetString(10);
-			equip[0].Senha = leitor.GetString(11);
-			equip[0].Status = leitor.GetString(12);
+			equip[0].Mac = leitor.GetString(6);
+			equip[0].Descricao = leitor.GetString(7);
+			equip[0].EnderecoIp = leitor.GetString(8);
+			equip[0].Mascara = leitor.GetString(9);
+			equip[0].Gateway = leitor.GetString(10);
+			equip[0].Usuario = leitor.GetString(11);
+			equip[0].Senha = leitor.GetString(12);
 			equip[0].Imagem = leitor.GetString(13);
+			equip[0].Estacao = leitor.GetString(14);
+			equip[0].Status = leitor.GetString(15);
+
+			conexao.desconectar();
+			cmd.Dispose();
+
+			return equip;
+		}
+
+		public List<EquipamentoDTO> SelecionarEquipamentoModelo(EquipamentoDTO e)
+		{
+			cmd.CommandText = "SELECT " +
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.mac, " +                
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+                "FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "WHERE tb_equipamento_modelo.modelo = '" + e.Modelo + "'";
+
+			cmd.Connection = conexao.conectar();
+			OleDbDataReader leitor = cmd.ExecuteReader();
+
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
+
+			leitor.Read();
+
+			equip.Add(new EquipamentoDTO());
+
+			equip[0].Id = leitor.GetInt32(0);
+			equip[0].Codigo = leitor.GetString(1);
+			equip[0].DataAquisicao = leitor.GetDateTime(2);
+			equip[0].TipoEquipamento = leitor.GetString(3);
+			equip[0].Fabricante = leitor.GetString(4);
+			equip[0].Modelo = leitor.GetString(5);
+            equip[0].Descricao = leitor.GetString(6);
+            equip[0].Mac = leitor.GetString(7);			
+			equip[0].EnderecoIp = leitor.GetString(8);
+			equip[0].Mascara = leitor.GetString(9);
+			equip[0].Gateway = leitor.GetString(10);
+			equip[0].Usuario = leitor.GetString(11);
+			equip[0].Senha = leitor.GetString(12);
+			equip[0].Imagem = leitor.GetString(13);
+			equip[0].Estacao = leitor.GetString(14);
+			equip[0].Status = leitor.GetString(15);
 
 			conexao.desconectar();
 			cmd.Dispose();
@@ -235,31 +302,33 @@ namespace SegurancaPatrimonial.BLL
 		public List<EquipamentoDTO> ListarEquipamento()
 		{
 			cmd.CommandText = "SELECT " +
-				"e.id, " +
-				"e.codigo, " +
-				"e.dataAquisicao, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"e.endIp, " +
-				"e.mascara, " +
-				"e.gateway, " +
-				"e.usuario, " +
-				"e.senha, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"ORDER BY e.codigo ASC";
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento.mac, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+                "FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "ORDER BY tb_equipamento.codigo DESC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
-			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(14);
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
 
 			while (leitor.Read())
 			{
@@ -267,19 +336,20 @@ namespace SegurancaPatrimonial.BLL
 
 				eqp.Id = leitor.GetInt32(0);
 				eqp.Codigo = leitor.GetString(1);
-				DateTime dataAquisicao = DateTime.Parse(leitor.GetString(2));
-				eqp.DataAquisicao = dataAquisicao.ToString("dd/MM/yyyy");
+				eqp.DataAquisicao = leitor.GetDateTime(2);
 				eqp.TipoEquipamento = leitor.GetString(3);
 				eqp.Fabricante = leitor.GetString(4);
 				eqp.Modelo = leitor.GetString(5);
-				eqp.Descricao = leitor.GetString(6);
-				eqp.EnderecoIp = leitor.GetString(7);
-				eqp.Mascara = leitor.GetString(8);
-				eqp.Gateway = leitor.GetString(9);
-				eqp.Usuario = leitor.GetString(10);
-				eqp.Senha = leitor.GetString(11);
-				eqp.Status = leitor.GetString(12);
+				eqp.Mac = leitor.GetString(6);
+				eqp.Descricao = leitor.GetString(7);
+				eqp.EnderecoIp = leitor.GetString(8);
+				eqp.Mascara = leitor.GetString(9);
+				eqp.Gateway = leitor.GetString(10);
+				eqp.Usuario = leitor.GetString(11);
+				eqp.Senha = leitor.GetString(12);				
 				eqp.Imagem = leitor.GetString(13);
+				eqp.Estacao = leitor.GetString(14);
+				eqp.Status = leitor.GetString(15);
 
 				equip.Add(eqp);
 			}
@@ -296,32 +366,34 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			cmd.CommandText = "SELECT " +
-				"e.id, " +
-				"e.codigo, " +
-				"e.dataAquisicao, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"e.endIp, " +
-				"e.mascara, " +
-				"e.gateway, " +
-				"e.usuario, " +
-				"e.senha, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.idTipoEquipamento = " + tipDto.Id + " " +
-				"ORDER BY e.codigo ASC";
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento.mac, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+                "FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "WHERE tb_equipamento_modelo.idTipoEquipamento = " + tipDto.Id + " " +
+                "ORDER BY tb_equipamento.codigo DESC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
-			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(14);
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
 
 			while (leitor.Read())
 			{
@@ -329,19 +401,20 @@ namespace SegurancaPatrimonial.BLL
 
 				eqp.Id = leitor.GetInt32(0);
 				eqp.Codigo = leitor.GetString(1);
-				DateTime dataAquisicao = DateTime.Parse(leitor.GetString(2));
-				eqp.DataAquisicao = dataAquisicao.ToString("dd/MM/yyyy");
+				eqp.DataAquisicao = leitor.GetDateTime(2);
 				eqp.TipoEquipamento = leitor.GetString(3);
 				eqp.Fabricante = leitor.GetString(4);
 				eqp.Modelo = leitor.GetString(5);
-				eqp.Descricao = leitor.GetString(6);
-				eqp.EnderecoIp = leitor.GetString(7);
-				eqp.Mascara = leitor.GetString(8);
-				eqp.Gateway = leitor.GetString(9);
-				eqp.Usuario = leitor.GetString(10);
-				eqp.Senha = leitor.GetString(11);
-				eqp.Status = leitor.GetString(12);
+				eqp.Mac = leitor.GetString(6);
+				eqp.Descricao = leitor.GetString(7);
+				eqp.EnderecoIp = leitor.GetString(8);
+				eqp.Mascara = leitor.GetString(9);
+				eqp.Gateway = leitor.GetString(10);
+				eqp.Usuario = leitor.GetString(11);
+				eqp.Senha = leitor.GetString(12);
 				eqp.Imagem = leitor.GetString(13);
+				eqp.Estacao = leitor.GetString(14);
+				eqp.Status = leitor.GetString(15);
 
 				equip.Add(eqp);
 			}
@@ -358,36 +431,38 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			fabDto.Nome = e.Fabricante;
-			fabBll.SelecionarCodigoFabricante(fabDto);
+			fabBll.SelecionarIdFabricante(fabDto);
 
 			cmd.CommandText = "SELECT " +
-				"e.id, " +
-				"e.codigo, " +
-				"e.dataAquisicao, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"e.endIp, " +
-				"e.mascara, " +
-				"e.gateway, " +
-				"e.usuario, " +
-				"e.senha, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.idTipoEquipamento = " + tipDto.Id + " " +
-				"AND m.codFabricante = '" + fabDto.Nome + "' " +
-				"ORDER BY e.codigo ASC";
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento.mac, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+                "FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "WHERE tb_equipamento_modelo.idTipoEquipamento = " + tipDto.Id + " " +
+                "AND tb_equipamento_modelo.idFabricante = " + fabDto.Id + " " +
+                "ORDER BY tb_equipamento.codigo DESC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
-			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(14);
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
 
 			while (leitor.Read())
 			{
@@ -395,21 +470,22 @@ namespace SegurancaPatrimonial.BLL
 
 				eqp.Id = leitor.GetInt32(0);
 				eqp.Codigo = leitor.GetString(1);
-				DateTime dataAquisicao = DateTime.Parse(leitor.GetString(2));
-				eqp.DataAquisicao = dataAquisicao.ToString("dd/MM/yyyy");
+				eqp.DataAquisicao = leitor.GetDateTime(2);
 				eqp.TipoEquipamento = leitor.GetString(3);
 				eqp.Fabricante = leitor.GetString(4);
 				eqp.Modelo = leitor.GetString(5);
-				eqp.Descricao = leitor.GetString(6);
-				eqp.EnderecoIp = leitor.GetString(7);
-				eqp.Mascara = leitor.GetString(8);
-				eqp.Gateway = leitor.GetString(9);
-				eqp.Usuario = leitor.GetString(10);
-				eqp.Senha = leitor.GetString(11);
-				eqp.Status = leitor.GetString(12);
-				eqp.Imagem = leitor.GetString(13);
+                eqp.Mac = leitor.GetString(6);
+                eqp.Descricao = leitor.GetString(7);
+                eqp.EnderecoIp = leitor.GetString(8);
+				eqp.Mascara = leitor.GetString(9);
+				eqp.Gateway = leitor.GetString(10);
+				eqp.Usuario = leitor.GetString(11);
+				eqp.Senha = leitor.GetString(12);
+                eqp.Imagem = leitor.GetString(13);
+                eqp.Estacao = leitor.GetString(14);
+                eqp.Status = leitor.GetString(15);
 
-				equip.Add(eqp);
+                equip.Add(eqp);
 			}
 
 			conexao.desconectar();
@@ -424,40 +500,44 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			fabDto.Nome = e.Fabricante;
-			fabBll.SelecionarCodigoFabricante(fabDto);
+			fabBll.SelecionarIdFabricante(fabDto);
 
 			modDto.Modelo = e.Modelo;
+			modDto.TipoEquipamento = e.TipoEquipamento;
+			modDto.Fabricante = e.Fabricante;
 			modBll.SelecionarCodigoModeloEquipamento(modDto);
 
 			cmd.CommandText = "SELECT " +
-				"e.id, " +
-				"e.codigo, " +
-				"e.dataAquisicao, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"e.endIp, " +
-				"e.mascara, " +
-				"e.gateway, " +
-				"e.usuario, " +
-				"e.senha, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.idTipoEquipamento = " + tipDto.Id + " " +
-				"AND m.codFabricante = '" + fabDto.Nome + "' " +
-				"AND e.codModelo = '" + modDto.Codigo + "' " +
-				"ORDER BY e.codigo ASC";
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento.mac, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+                "FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "WHERE tb_equipamento_modelo.idTipoEquipamento = " + tipDto.Id + " " +
+                "AND tb_equipamento_modelo.idFabricante = " + fabDto.Id + " " +
+                "AND tb_equipamento.codModelo = '" + modDto.Codigo + "' " +
+                "ORDER BY tb_equipamento.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
-			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(14);
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
 
 			while (leitor.Read())
 			{
@@ -465,21 +545,22 @@ namespace SegurancaPatrimonial.BLL
 
 				eqp.Id = leitor.GetInt32(0);
 				eqp.Codigo = leitor.GetString(1);
-				DateTime dataAquisicao = DateTime.Parse(leitor.GetString(2));
-				eqp.DataAquisicao = dataAquisicao.ToString("dd/MM/yyyy");
+				eqp.DataAquisicao = leitor.GetDateTime(2);
 				eqp.TipoEquipamento = leitor.GetString(3);
 				eqp.Fabricante = leitor.GetString(4);
 				eqp.Modelo = leitor.GetString(5);
-				eqp.Descricao = leitor.GetString(6);
-				eqp.EnderecoIp = leitor.GetString(7);
-				eqp.Mascara = leitor.GetString(8);
-				eqp.Gateway = leitor.GetString(9);
-				eqp.Usuario = leitor.GetString(10);
-				eqp.Senha = leitor.GetString(11);
-				eqp.Status = leitor.GetString(12);
-				eqp.Imagem = leitor.GetString(13);
+                eqp.Mac = leitor.GetString(6);
+                eqp.Descricao = leitor.GetString(7);
+                eqp.EnderecoIp = leitor.GetString(8);
+				eqp.Mascara = leitor.GetString(9);
+				eqp.Gateway = leitor.GetString(10);
+				eqp.Usuario = leitor.GetString(11);
+				eqp.Senha = leitor.GetString(12);
+                eqp.Imagem = leitor.GetString(13);
+                eqp.Estacao = leitor.GetString(14);
+                eqp.Status = leitor.GetString(15);
 
-				equip.Add(eqp);
+                equip.Add(eqp);
 			}
 
 			conexao.desconectar();
@@ -487,6 +568,7 @@ namespace SegurancaPatrimonial.BLL
 
 			return equip;
 		}
+
 
 		public string SelecionarCodigoEquipamento(EquipamentoDTO e)
 		{
@@ -496,19 +578,99 @@ namespace SegurancaPatrimonial.BLL
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				e.Codigo = leitor.GetString(0);
 
 				conexao.desconectar();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 
 			return e.Codigo;
+		}
+
+		public List<EquipamentoDTO> SelecionarEquipamentoId(EquipamentoDTO e)
+		{
+			cmd.CommandText = "SELECT " +
+                "tb_equipamento.id, " +
+                "tb_equipamento.codigo, " +
+                "tb_equipamento.dataAquisicao, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento.mac, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento.endIp, " +
+                "tb_equipamento.mascara, " +
+                "tb_equipamento.gateway, " +
+                "tb_equipamento.usuario, " +
+                "tb_equipamento.senha, " +
+                "tb_equipamento_modelo.imagem, " +
+                "tb_equipamento.codEstacao, " +
+                "tb_equipamento_status.status " +
+                "FROM ((((tb_equipamento " +
+                "INNER JOIN tb_equipamento_modelo ON tb_equipamento.codModelo = tb_equipamento_modelo.codigo) " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id) " +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "INNER JOIN tb_equipamento_status ON tb_equipamento.idStatus = tb_equipamento_status.id) " +
+                "WHERE tb_equipamento.id = " + e.Id;
+
+			cmd.Connection = conexao.conectar();
+			OleDbDataReader leitor = cmd.ExecuteReader();
+
+			List<EquipamentoDTO> equip = new List<EquipamentoDTO>(16);
+
+			leitor.Read();
+
+			equip.Add(new EquipamentoDTO());
+
+			equip[0].Id = leitor.GetInt32(0);
+			equip[0].Codigo = leitor.GetString(1);
+			equip[0].DataAquisicao = leitor.GetDateTime(2);
+			equip[0].TipoEquipamento = leitor.GetString(3);
+			equip[0].Fabricante = leitor.GetString(4);
+			equip[0].Modelo = leitor.GetString(5);
+			equip[0].Mac = leitor.GetString(6);
+			equip[0].Descricao = leitor.GetString(7);
+			equip[0].EnderecoIp = leitor.GetString(8);
+			equip[0].Mascara = leitor.GetString(9);
+			equip[0].Gateway = leitor.GetString(10);
+			equip[0].Usuario = leitor.GetString(11);
+			equip[0].Senha = leitor.GetString(12);
+			equip[0].Imagem = leitor.GetString(13);
+            equip[0].Imagem = leitor.GetString(13);
+            equip[0].Estacao = leitor.GetString(14);
+            equip[0].Status = leitor.GetString(15);
+
+            conexao.desconectar();
+			cmd.Dispose();
+
+			return equip;
+		}
+
+		public void InstalarEquipamentoEstacao(EquipamentoDTO e)
+		{
+			cmd.CommandText = "UPDATE tb_equipamento SET " +
+				"codEstacao = '" + e.Estacao + "', " +
+				"idStatus = 2 " + 
+				"WHERE codigo = '" + e.Codigo + "'";
+
+			try
+			{
+				cmd.Connection = conexao.conectar();
+				cmd.ExecuteNonQuery();
+
+				conexao.desconectar();
+				cmd.Dispose();
+			}
+			catch (OleDbException ex)
+			{
+				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 	}
 }

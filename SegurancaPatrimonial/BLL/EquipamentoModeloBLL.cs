@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using SegurancaPatrimonial.DTO;
 using SegurancaPatrimonial.DAL;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace SegurancaPatrimonial.BLL
 {
     class EquipamentoModeloBLL
     {
         ConexaoDAL conexao = new ConexaoDAL();
-        MySqlCommand cmd = new MySqlCommand();
+        OleDbCommand cmd = new OleDbCommand();
 
 		EquipamentoTipoDTO tipDto = new EquipamentoTipoDTO();
 		EquipamentoTipoBLL tipBll = new EquipamentoTipoBLL();
@@ -22,8 +22,9 @@ namespace SegurancaPatrimonial.BLL
 		EquipamentoFabricanteBLL fabBll = new EquipamentoFabricanteBLL();
 
 		Int32 qtdIdModeloEquipamento;
+		Int32 qtdModeloEquipamento;
 
-		public void CriarNovoModeloEquipamento(EquipamentoModeloDTO m)
+        public void CriarNovoModeloEquipamento(EquipamentoModeloDTO m)
 		{
 			this.ContarIdModeloEquipamento();
 
@@ -38,14 +39,14 @@ namespace SegurancaPatrimonial.BLL
 				try
 				{
 					cmd.Connection = conexao.conectar();
-					MySqlDataReader leitor = cmd.ExecuteReader();
+					OleDbDataReader leitor = cmd.ExecuteReader();
 
 					leitor.Read();
 					m.Id = leitor.GetInt32(0);
 
 					conexao.desconectar();
 				}
-				catch (MySqlException ex)
+				catch (OleDbException ex)
 				{
 					MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				}
@@ -59,7 +60,7 @@ namespace SegurancaPatrimonial.BLL
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				qtdIdModeloEquipamento = leitor.GetInt32(0);
@@ -67,7 +68,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -81,7 +82,7 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			fabDto.Nome = m.Fabricante;
-			fabBll.SelecionarCodigoFabricante(fabDto);
+			fabBll.SelecionarIdFabricante(fabDto);
 
 			cmd.CommandText = "INSERT INTO tb_equipamento_modelo (" +
 				"id, " +
@@ -94,8 +95,8 @@ namespace SegurancaPatrimonial.BLL
 				"VALUES (" +
 				m.Id + ", '" +
 				m.Codigo + "', " +
-				tipDto.Id + ", '" +
-				fabDto.Codigo + "', '" +
+				tipDto.Id + ", " +
+				fabDto.Id + ", '" +
 				m.Modelo + "', '" +
 				m.Descricao + "', '" +
 				m.Imagem + ")";
@@ -108,7 +109,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -120,11 +121,11 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			fabDto.Nome = m.Fabricante;
-			fabBll.SelecionarCodigoFabricante(fabDto);
+			fabBll.SelecionarIdFabricante(fabDto);
 
 			cmd.CommandText = "UPDATE tb_equipamento_modelo SET " +
 				"idTipoEquipamento = " + tipDto.Id + ", " +
-				"codFabricante = '" + fabDto.Codigo + "', " +
+				"codFabricante = " + fabDto.Id + ", " +
 				"modelo = '" + m.Modelo + "', " +
 				"descricao = '" + m.Descricao + "' " +
 				"WHERE codigo = '" + m.Codigo + "'";
@@ -137,7 +138,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -155,7 +156,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -163,24 +164,23 @@ namespace SegurancaPatrimonial.BLL
 
 		public List<EquipamentoModeloDTO> SelecionarModeloEquipamento(EquipamentoModeloDTO m)
 		{
+			this.SelecionarCodigoModeloEquipamento(m);
+
 			cmd.CommandText = "SELECT " +
-				"m.id, " +
-				"m.codigo, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.codigo = '" + m.Codigo + "'";
+                "tb_equipamento_modelo.id, " +
+                "tb_equipamento_modelo.codigo, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento_modelo.imagem " +
+				"FROM ((tb_equipamento_modelo " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id)" +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "WHERE tb_equipamento_modelo.codigo = '" + m.Codigo + "'";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<EquipamentoModeloDTO> modelo = new List<EquipamentoModeloDTO>(7);
 
@@ -205,23 +205,20 @@ namespace SegurancaPatrimonial.BLL
 		public List<EquipamentoModeloDTO> ListarModeloEquipamento(EquipamentoModeloDTO m)
 		{
 			cmd.CommandText = "SELECT " +
-				"m.id, " +
-				"m.codigo, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"ORDER BY m.codigo ASC";
+                "tb_equipamento_modelo.id, " +
+                "tb_equipamento_modelo.codigo, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento_modelo.imagem " +
+                "FROM ((tb_equipamento_modelo " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id)" +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "ORDER BY tb_equipamento_modelo.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<EquipamentoModeloDTO> modelo = new List<EquipamentoModeloDTO>(7);
 
@@ -252,24 +249,21 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			cmd.CommandText = "SELECT " +
-				"m.id, " +
-				"m.codigo, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.idTipoEquipamento = " + tipDto.Id + " " +
-				"ORDER BY m.codigo ASC";
+                "tb_equipamento_modelo.id, " +
+                "tb_equipamento_modelo.codigo, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento_modelo.imagem " +
+                "FROM ((tb_equipamento_modelo " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id)" +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "WHERE tb_equipamento_modelo.idTipoEquipamento = " + tipDto.Id + " " +
+                "ORDER BY tb_equipamento_modelo.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<EquipamentoModeloDTO> modelo = new List<EquipamentoModeloDTO>(7);
 
@@ -297,27 +291,24 @@ namespace SegurancaPatrimonial.BLL
 		public List<EquipamentoModeloDTO> ListarModeloEquipamentoFabricante(EquipamentoModeloDTO m)
 		{
 			fabDto.Nome = m.Fabricante;
-			fabBll.SelecionarCodigoFabricante(fabDto);
+			fabBll.SelecionarIdFabricante(fabDto);
 
 			cmd.CommandText = "SELECT " +
-				"m.id, " +
-				"m.codigo, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.codFabricante = '" + fabDto.Codigo + "' " +
-				"ORDER BY m.codigo ASC";
+                "tb_equipamento_modelo.id, " +
+                "tb_equipamento_modelo.codigo, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento_modelo.imagem " +
+                "FROM ((tb_equipamento_modelo " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id)" +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "WHERE tb_equipamento_modelo.idFabricante = " + fabDto.Id + " " +
+                "ORDER BY tb_equipamento_modelo.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<EquipamentoModeloDTO> modelo = new List<EquipamentoModeloDTO>(7);
 
@@ -348,28 +339,25 @@ namespace SegurancaPatrimonial.BLL
 			tipBll.SelecionarIdTipoEquipamento(tipDto);
 
 			fabDto.Nome = m.Fabricante;
-			fabBll.SelecionarCodigoFabricante(fabDto);
+			fabBll.SelecionarIdFabricante(fabDto);
 
 			cmd.CommandText = "SELECT " +
-				"m.id, " +
-				"m.codigo, " +
-				"t.tipo, " +
-				"f.nome, " +
-				"m.modelo, " +
-				"m.descricao, " +
-				"m.imagem, " +
-				"s.sttatus " +
-				"FROM tb_equipamento e " +
-				"INNER JOIN tb_equipamento_modelo m ON e.codModelo = m.codigo " +
-				"INNER JOIN tb_equipamento_tipo t ON m.idTipoEquipamento " +
-				"INNER JOIN tb_equipamento_fabricante f ON m.codFabricante = f.codigo " +
-				"INNER JOIN tb_equipamento_status s ON e.idStatus = s.id " +
-				"WHERE m.codFabricante = '" + fabDto.Codigo + "' " +
-				"AND m.idTipoEquipamento = " + tipDto.Id + " " +
-				"ORDER BY m.codigo ASC";
+                "tb_equipamento_modelo.id, " +
+                "tb_equipamento_modelo.codigo, " +
+                "tb_equipamento_tipo.tipo, " +
+                "tb_equipamento_fabricante.nome, " +
+                "tb_equipamento_modelo.modelo, " +
+                "tb_equipamento_modelo.descricao, " +
+                "tb_equipamento_modelo.imagem " +
+                "FROM ((tb_equipamento_modelo " +
+                "INNER JOIN tb_equipamento_tipo ON tb_equipamento_modelo.idTipoEquipamento = tb_equipamento_tipo.id)" +
+                "INNER JOIN tb_equipamento_fabricante ON tb_equipamento_modelo.idFabricante = tb_equipamento_fabricante.id) " +
+                "WHERE tb_equipamento_modelo.idFabricante = " + fabDto.Id + " " +
+                "AND tb_equipamento_modelo.idTipoEquipamento = " + tipDto.Id + " " +
+                "ORDER BY tb_equipamento_modelo.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<EquipamentoModeloDTO> modelo = new List<EquipamentoModeloDTO>(7);
 
@@ -396,10 +384,18 @@ namespace SegurancaPatrimonial.BLL
 
 		public List<EquipamentoModeloDTO> PopularComboboxModeloEquipamento(EquipamentoModeloDTO m)
 		{
-			cmd.CommandText = "SELECT modelo FROM tb_equipamento_modelo";
+			tipDto.Tipo = m.TipoEquipamento;
+			tipBll.SelecionarIdTipoEquipamento(tipDto);
+
+			fabDto.Nome = m.Fabricante;
+			fabBll.SelecionarIdFabricante(fabDto);
+
+			cmd.CommandText = "SELECT modelo FROM tb_equipamento_modelo " +
+				"WHERE idTipoEquipamento = " + tipDto.Id + " " +
+				"AND  idFabricante = " + fabDto.Id;
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 			List<EquipamentoModeloDTO> modelo = new List<EquipamentoModeloDTO>();
 
 			while (leitor.Read())
@@ -417,25 +413,57 @@ namespace SegurancaPatrimonial.BLL
 
 		public string SelecionarCodigoModeloEquipamento(EquipamentoModeloDTO m)
 		{
+			tipDto.Tipo = m.TipoEquipamento;
+			tipBll.SelecionarIdTipoEquipamento(tipDto);
+
+			fabDto.Nome = m.Fabricante;
+			fabBll.SelecionarIdFabricante(fabDto);
+
 			cmd.CommandText = "SELECT codigo FROM tb_equipamento_modelo " +
-				"WHERE modelo = '" + m.Modelo + "'";
+				"WHERE modelo = '" + m.Modelo + "' " +
+				"AND idTipoEquipamento = " + tipDto.Id + " " +
+				"AND idFabricante = " + fabDto.Id;
 
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				m.Codigo = leitor.GetString(0);
 
 				conexao.desconectar();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 
 			return m.Codigo;
 		}
-	}
+
+        public Int32 ContarQtdModeloEquipamento(EquipamentoModeloDTO em)
+        {
+            cmd.CommandText = "SELECT COUNT(id) FROM tb_equipamento_modelo " +
+				"WHERE modelo = '" + em.Modelo + "'";
+
+            try
+            {
+                cmd.Connection = conexao.conectar();
+                OleDbDataReader leitor = cmd.ExecuteReader();
+
+                leitor.Read();
+                qtdModeloEquipamento = leitor.GetInt32(0);
+
+                conexao.desconectar();
+                cmd.Dispose();
+            }
+            catch (OleDbException ex)
+            {
+                MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return qtdModeloEquipamento;
+        }
+    }
 }

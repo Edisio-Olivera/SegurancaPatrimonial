@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using SegurancaPatrimonial.DTO;
 using SegurancaPatrimonial.DAL;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace SegurancaPatrimonial.BLL
 {
     class ClienteBaseBLL
     {
 		ConexaoDAL conexao = new ConexaoDAL();
-		MySqlCommand cmd = new MySqlCommand();
+		OleDbCommand cmd = new OleDbCommand();
 
 		ClienteDTO cliDto = new ClienteDTO();
 		ClienteBLL cliBll = new ClienteBLL();
@@ -35,14 +35,14 @@ namespace SegurancaPatrimonial.BLL
 				try
 				{
 					cmd.Connection = conexao.conectar();
-					MySqlDataReader leitor = cmd.ExecuteReader();
+					OleDbDataReader leitor = cmd.ExecuteReader();
 
 					leitor.Read();
 					b.Id = leitor.GetInt32(0);
 
 					conexao.desconectar();
 				}
-				catch (MySqlException ex)
+				catch (OleDbException ex)
 				{
 					MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				}
@@ -56,7 +56,7 @@ namespace SegurancaPatrimonial.BLL
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				qtdIdClienteBase = leitor.GetInt32(0);
@@ -64,7 +64,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -98,7 +98,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -123,7 +123,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -141,7 +141,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -149,51 +149,53 @@ namespace SegurancaPatrimonial.BLL
 
 		public List<ClienteBaseDTO> SelecionarBaseCliente(ClienteBaseDTO b)
 		{
+			this.SelecionarCodigoBaseCliente(b);
+
 			cmd.CommandText = "SELECT " +
-				"b.id, " +
-				"b.codigo, " +
-				"c.nome, " +
-				"b.nome, " +
-				"b.iata " +
-				"FROM tb_cliente_base b " +
-				"INNER JOIN tb_cliente c ON b.codCliente = c.codigo " +
-				"WHERE b.codigo = '" + b.Codigo + "'";
+                "tb_cliente_base.id, " +
+                "tb_cliente_base.codigo, " +
+                "tb_cliente.nome, " +
+                "tb_cliente_base.nome, " +
+                "tb_cliente_base.iata " +
+				"FROM (tb_cliente_base " +
+                "INNER JOIN tb_cliente ON tb_cliente_base.codCliente = tb_cliente.codigo) " +
+                "WHERE tb_cliente_base.codigo = '" + b.Codigo + "'";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
-			List<ClienteBaseDTO> basse = new List<ClienteBaseDTO>(5);
+			List<ClienteBaseDTO> bas = new List<ClienteBaseDTO>(5);
 
 			leitor.Read();
 
-			basse.Add(new ClienteBaseDTO());
+			bas.Add(new ClienteBaseDTO());
 
-			basse[0].Id = leitor.GetInt32(0);
-			basse[0].Codigo = leitor.GetString(1);
-			basse[0].Cliente = leitor.GetString(2);
-			basse[0].Base = leitor.GetString(3);
-			basse[0].Iata = leitor.GetString(4);
+			bas[0].Id = leitor.GetInt32(0);
+			bas[0].Codigo = leitor.GetString(1);
+			bas[0].Cliente = leitor.GetString(2);
+			bas[0].Base = leitor.GetString(3);
+			bas[0].Iata = leitor.GetString(4);
 
 			conexao.desconectar();
 			cmd.Dispose();
 
-			return basse;
+			return bas;
 		}
 
 		public List<ClienteBaseDTO> ListarBaseCliente(ClienteBaseDTO b)
 		{
 			cmd.CommandText = "SELECT " +
-				"b.id, " +
-				"b.codigo, " +
-				"c.nome, " +
-				"b.nome, " +
-				"b.iata " +
-				"FROM tb_cliente_base_local l " +
-				"INNER JOIN tb_cliente c ON b.codCliente = c.codigo " +
-				"ORDER BY b.codigo ASC";
+                "tb_cliente_base.id, " +
+                "tb_cliente_base.codigo, " +
+                "tb_cliente.nome, " +
+                "tb_cliente_base.nome, " +
+                "tb_cliente_base.iata " +
+                "FROM (tb_cliente_base " +
+                "INNER JOIN tb_cliente ON tb_cliente_base.codCliente = tb_cliente.codigo) " +
+                "ORDER BY tb_cliente_base.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<ClienteBaseDTO> basse = new List<ClienteBaseDTO>(5);
 
@@ -216,16 +218,12 @@ namespace SegurancaPatrimonial.BLL
 			return basse;
 		}
 
-		public List<ClienteBaseDTO> PopularComboboxBaseCliente(ClienteBaseDTO b)
+		public List<ClienteBaseDTO> PopularComboboxBaseCliente()
 		{
-			cliDto.NomeFantasia = b.Cliente;
-			cliBll.SelecionarCodigoCliente(cliDto);
-
-			cmd.CommandText = "SELECT nome FROM tb_cliente_base " +
-				"WHERE codCliente = '" + cliDto.Codigo + "'";
+			cmd.CommandText = "SELECT nome FROM tb_cliente_base";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 			List<ClienteBaseDTO> basse = new List<ClienteBaseDTO>();
 
 			while (leitor.Read())
@@ -240,7 +238,7 @@ namespace SegurancaPatrimonial.BLL
 
 			return basse;
 		}
-
+		//1
 		public string SelecionarCodigoBaseCliente(ClienteBaseDTO b)
 		{
 			cmd.CommandText = "SELECT codigo FROM tb_cliente_base " +
@@ -249,14 +247,14 @@ namespace SegurancaPatrimonial.BLL
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				b.Codigo = leitor.GetString(0);
 
 				conexao.desconectar();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}

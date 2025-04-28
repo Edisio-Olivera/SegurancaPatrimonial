@@ -4,30 +4,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace SegurancaPatrimonial.DAL
 {
     class ConexaoDAL
     {
-        MySqlConnection conn = new MySqlConnection();
-
-        static public string servidor = "localhost";
-        static public string bancoDados = "db_gestao_segpat";
-        static public string usuario = "root";
-        static public string senha = "190112";
-
-        //static public string strConn = "Provider=Microsoft.ACE.OLEDB.12.0;" + Application.StartupPath + @"\Banco de Dados\db_gestao_segsal.accdb;";
-
-        static public string strConn = $"server={servidor};User Id={usuario};database={bancoDados};password={senha}";
-        //static public string strConn = $"server=localhost;User Id=db_gestaosegsal;database=root;password=190112";
+        OleDbConnection conn = new OleDbConnection();
+	
+	    static public string strConn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\seris\OneDrive\= DESENVOLVIMENTO =\= SISTEMA SEGPAT =\SegurancaPatrimonial\SegurancaPatrimonial\db_gestao_segpat.accdb";
 
         public ConexaoDAL()
         {
             conn.ConnectionString = strConn;
         }
 
-        public MySqlConnection conectar()
+        public OleDbConnection conectar()
         {
             if (conn.State == System.Data.ConnectionState.Closed)
             {

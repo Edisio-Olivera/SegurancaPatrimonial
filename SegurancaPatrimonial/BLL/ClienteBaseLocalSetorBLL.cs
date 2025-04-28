@@ -6,19 +6,20 @@ using System.Threading.Tasks;
 using SegurancaPatrimonial.DTO;
 using SegurancaPatrimonial.DAL;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace SegurancaPatrimonial.BLL
 {
     class ClienteBaseLocalSetorBLL
     {
         ConexaoDAL conexao = new ConexaoDAL();
-        MySqlCommand cmd = new MySqlCommand();
+        OleDbCommand cmd = new OleDbCommand();
 
 		ClienteBaseLocalDTO locDto = new ClienteBaseLocalDTO();
 		ClienteBaseLocalBLL locBll = new ClienteBaseLocalBLL();
 
 		Int32 qtdIdClienteLocalSetor;
+		Int32 qtdClienteLocalSetor;
 
 		public void CriarNovoLocalSetor(ClienteBaseLocalSetorDTO s)
 		{
@@ -35,14 +36,14 @@ namespace SegurancaPatrimonial.BLL
 				try
 				{
 					cmd.Connection = conexao.conectar();
-					MySqlDataReader leitor = cmd.ExecuteReader();
+					OleDbDataReader leitor = cmd.ExecuteReader();
 
 					leitor.Read();
 					s.Id = leitor.GetInt32(0);
 
 					conexao.desconectar();
 				}
-				catch (MySqlException ex)
+				catch (OleDbException ex)
 				{
 					MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				}
@@ -56,7 +57,7 @@ namespace SegurancaPatrimonial.BLL
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				qtdIdClienteLocalSetor = leitor.GetInt32(0);
@@ -64,7 +65,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -98,7 +99,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -123,7 +124,7 @@ namespace SegurancaPatrimonial.BLL
 				conexao.desconectar();
 				cmd.Dispose();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -131,22 +132,24 @@ namespace SegurancaPatrimonial.BLL
 
 		public List<ClienteBaseLocalSetorDTO> SelecionarLocalSetor(ClienteBaseLocalSetorDTO s)
 		{
+			this.SelecionarCodigoLocalSetor(s);
+
 			cmd.CommandText = "SELECT " +
-				"s.id, " +
-				"s.codigo, " +
-				"c.nome, " +
-				"b.nome, " +
-				"l.nome, " +
-				"s.nome, " +
-				"s.iata " +
-				"FROM tb_cliente_base_local_setor s " +
-				"INNER JOIN tb_cliente_base_local l ON s.codLocal = l.codigo " +
-				"INNER JOIN tb_cliente_base b ON l.codBase = b.codigo " +
-				"INNER JOIN tb_cliente c ON b.codCliente = c.codigo " +
-				"WHERE s.codigo = '" + s.Codigo + "'";
+                "tb_cliente_base_local_setor.id, " +
+                "tb_cliente_base_local_setor.codigo, " +
+                "tb_cliente.nome, " +
+                "tb_cliente_base.nome, " +
+                "tb_cliente_base_local.nome, " +
+                "tb_cliente_base_local_setor.nome, " +
+                "tb_cliente_base_local_setor.iata " +
+				"FROM (((tb_cliente_base_local_setor " +
+                "INNER JOIN tb_cliente_base_local ON tb_cliente_base_local_setor.codLocal = tb_cliente_base_local.codigo) " +
+                "INNER JOIN tb_cliente_base ON tb_cliente_base_local.codBase = tb_cliente_base.codigo) " +
+                "INNER JOIN tb_cliente ON tb_cliente_base.codCliente = tb_cliente.codigo) " +
+                "WHERE tb_cliente_base_local_setor.codigo = '" + s.Codigo + "' ";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<ClienteBaseLocalSetorDTO> setor = new List<ClienteBaseLocalSetorDTO>(7);
 
@@ -171,21 +174,21 @@ namespace SegurancaPatrimonial.BLL
 		public List<ClienteBaseLocalSetorDTO> ListarLocalSetor(ClienteBaseLocalSetorDTO s)
 		{
 			cmd.CommandText = "SELECT " +
-				"s.id, " +
-				"s.codigo, " +
-				"c.nome, " +
-				"b.nome, " +
-				"l.nome, " +
-				"s.nome, " +
-				"s.iata " +
-				"FROM tb_cliente_base_local_setor s " +
-				"INNER JOIN tb_cliente_base_local l ON s.codLocal = l.codigo " +
-				"INNER JOIN tb_cliente_base b ON l.codBase = b.codigo " +
-				"INNER JOIN tb_cliente c ON b.codCliente = c.codigo " +
-				"ORDER BY S.codigo ASC";
+                "tb_cliente_base_local_setor.id, " +
+                "tb_cliente_base_local_setor.codigo, " +
+                "tb_cliente.nome, " +
+                "tb_cliente_base.nome, " +
+                "tb_cliente_base_local.nome, " +
+                "tb_cliente_base_local_setor.nome, " +
+                "tb_cliente_base_local_setor.iata " +
+                "FROM (((tb_cliente_base_local_setor " +
+                "INNER JOIN tb_cliente_base_local ON tb_cliente_base_local_setor.codLocal = tb_cliente_base_local.codigo) " +
+                "INNER JOIN tb_cliente_base ON tb_cliente_base_local.codBase = tb_cliente_base.codigo) " +
+                "INNER JOIN tb_cliente ON tb_cliente_base.codCliente = tb_cliente.codigo) " +
+                "ORDER BY S.codigo ASC";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 
 			List<ClienteBaseLocalSetorDTO> setor = new List<ClienteBaseLocalSetorDTO>(7);
 
@@ -212,20 +215,24 @@ namespace SegurancaPatrimonial.BLL
 
 		public string SelecionarCodigoLocalSetor(ClienteBaseLocalSetorDTO s)
         {
+			locDto.Local = s.Local;
+			locBll.SelecionarCodigoBaseLocal(locDto);
+
 			cmd.CommandText = "SELECT codigo FROM tb_cliente_base_local_setor " +
-				"WHERE nome = '" + s.Setor + "'";
+				"WHERE nome = '" + s.Setor + "' " +
+				"AND codLocal = '" + locDto.Codigo + "'";
 
 			try
 			{
 				cmd.Connection = conexao.conectar();
-				MySqlDataReader leitor = cmd.ExecuteReader();
+				OleDbDataReader leitor = cmd.ExecuteReader();
 
 				leitor.Read();
 				s.Codigo = leitor.GetString(0);
 
 				conexao.desconectar();
 			}
-			catch (MySqlException ex)
+			catch (OleDbException ex)
 			{
 				MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -242,7 +249,7 @@ namespace SegurancaPatrimonial.BLL
 				"WHERE codLocal = '" + locDto.Codigo + "'";
 
 			cmd.Connection = conexao.conectar();
-			MySqlDataReader leitor = cmd.ExecuteReader();
+			OleDbDataReader leitor = cmd.ExecuteReader();
 			List<ClienteBaseLocalSetorDTO> setor = new List<ClienteBaseLocalSetorDTO>();
 
 			while (leitor.Read())
@@ -257,5 +264,29 @@ namespace SegurancaPatrimonial.BLL
 
 			return setor;
 		}
+
+		//public Int32 ContarLocalSetor(ClienteBaseLocalSetorDTO s)
+		//{
+		//	cmd.CommandText = "SELECT COUNT(id) FROM tb_cliente_base_local_setor " +
+		//		"WHERE codigo = '" + s.Codigo + "'";
+
+		//	try
+		//	{
+		//		cmd.Connection = conexao.conectar();
+		//		OleDbDataReader leitor = cmd.ExecuteReader();
+
+		//		leitor.Read();
+		//		qtdClienteLocalSetor = leitor.GetInt32(0);
+
+		//		conexao.desconectar();
+		//		cmd.Dispose();
+		//	}
+		//	catch (OleDbException ex)
+		//	{
+		//		MessageBox.Show("Erro ao conectar ao banco de Dados! " + ex, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		//	}
+
+		//	return qtdClienteLocalSetor;
+		//}
 	}
 }

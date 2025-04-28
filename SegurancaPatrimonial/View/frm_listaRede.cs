@@ -7,23 +7,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SegurancaPatrimonial.View;
 
-namespace SegurancaPatrimonial
+namespace SegurancaPatrimonial.View
 {
-    public partial class Form1 : Form
+    public partial class frm_listaRede : Form
     {
-        public Form1()
+        public frm_listaRede()
         {
             InitializeComponent();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void frm_listaRede_Load(object sender, EventArgs e)
         {
-            frm_equipamento eqp = new frm_equipamento();
-            eqp.Visible = true;
 
-            //this.Close();
         }
     }
 }

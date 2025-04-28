@@ -10,11 +10,14 @@ namespace SegurancaPatrimonial.DTO
     {
 		private Int32 _id;
 		private string _codigo;
+        private string _tipoEstacao;
+        private string _base;
 		private string _local;
 		private string _setor;
 		private string _descricao;
 		private string _observacao;
 		private Int32 _altura;
+        private string _tipoAlimentacao;
 		private string _tipoConexao;
 		private string _tipoCabo;
 		private string _tipoInfra;
@@ -22,6 +25,9 @@ namespace SegurancaPatrimonial.DTO
 		private Int32 _qtdCabo;
 		private string _equipamento;
 		private string _status;
+        private string _imagem;
+        private string _qrCode;
+        private string _rack;
 
         public int Id { get => _id; set => _id = value; }
         public string Codigo { get => _codigo; set => _codigo = value; }
@@ -37,5 +43,11 @@ namespace SegurancaPatrimonial.DTO
         public int QtdCabo { get => _qtdCabo; set => _qtdCabo = value; }
         public string Equipamento { get => _equipamento; set => _equipamento = value; }
         public string Status { get => _status; set => _status = value; }
+        public string Base { get => _base; set => _base = value; }
+        public string TipoEstacao { get => _tipoEstacao; set => _tipoEstacao = value; }
+        public string TipoAlimentacao { get => _tipoAlimentacao; set => _tipoAlimentacao = value; }
+        public string Imagem { get => _imagem; set => _imagem = value; }
+        public string QrCode { get => _qrCode; set => _qrCode = value; }
+        public string Rack { get => _rack; set => _rack = value; }
     }
 }
